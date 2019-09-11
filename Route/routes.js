@@ -67,7 +67,7 @@ router.post('/books', (req, res ) => {
             console.log(data);
         }
     })
-    // res.send(book);
+ 
 })
 
 
@@ -98,7 +98,7 @@ router.post('/users', (req, res ) => {
 });
 
 
-router.post('/users/login', auth, (req, res) => {
+router.post('/users/login', (req, res) => {
     User.findOne({ email: req.body.email }).then(user =>{
         if(!user){
             res.status(404).send('user not found...check your email or password')
@@ -106,10 +106,10 @@ router.post('/users/login', auth, (req, res) => {
         else{
           bcrypt.compare(req.body.password, user.password).then(isMatch =>{
                 if(isMatch){
-                    data = {id: user._id, name: user.name}
+                    data = {id: user._id, name: user.name, role: user.role}
                     console.log(data)
-                    const token = jwt.sign({id:user._id}, config.get('jwtPrivateKey'));
-                    res.header('x-auth-token',token).status(200).send("login successful");
+                  const token = jwt.sign(data, config.get('jwtPrivateKey'), {expiresIn: '30d'})
+                  res.send(token)
                 }
                 else{
                     console.log("not match");
@@ -126,18 +126,11 @@ router.post('/users/login', auth, (req, res) => {
 })
 
 
-router.delete('/admin/delete', [auth, authorization], (req ,res) =>{
- findOneAndDelete({email: req.body.email}).then(deleted => {
-     if(deleted){
-         res.send("Deleted")
-     }
-     else{
-         res.send("Not deleted")
-     }
- }).catch(err => {
-     console.log(err)
- })
+router.delete('/admin/delete', authorization, (req ,res) =>{
+  User.findOneAndDelete({email: req.body.email});
+  
 })
+
 
 
 module.exports = router

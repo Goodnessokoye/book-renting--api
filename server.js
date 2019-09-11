@@ -7,26 +7,20 @@ const bodyParser = require('body-parser')
 const createNewBook = require('./helpers/createNewBook'); 
 const auth = require('./middlwares/auth');
 
-const app = express();
-
 const Book = require('./models/books');
 const routes = require("./Route/routes")
+
+const app = express();
+
 
 
 
 app.use(express.json());
 
 app.use(bodyParser.urlencoded({ extended: false }))
- 
 app.use(bodyParser.json())
 
 app.use('/api', routes)
-
-// app.use(authorization)
-// app.use(auth);
-// app.use(deleteUser);
-
-
 const port = process.env.Port || 5000
 app.listen(port, () =>{
     console.log(`server is running ${port}`)

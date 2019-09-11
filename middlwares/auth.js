@@ -7,7 +7,6 @@ auth = function (req, res , next ){
      
      try{
          const decoded = jwt.verify(token, config.get('jwtPrivateKey'));
-         req.user = decoded;
          console.log(decoded)
          next();
      } catch (ex) {
@@ -18,17 +17,15 @@ auth = function (req, res , next ){
 authorization = function(req, res, next){
     const token = req.header("x-auth-token");
         const decoded = jwt.verify(token, config.get('jwtPrivateKey'));
-        req.user = decoded;
        if(decoded.role == "Admin") {
            res.status().send("Authorized")
+        console.log("Authorized")
            next()
        }
        else{
-           res.send("Not authorized")
-           next()
-       }
-        next();
-    
+         res.send("Not authorized")
+            console.log("not Authorized")
+       }    
 }
 
 module.exports = {auth, authorization};
