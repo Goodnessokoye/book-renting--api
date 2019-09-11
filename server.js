@@ -4,7 +4,8 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const databaseConfig = require('./config/db');
 const bodyParser = require('body-parser')
-const createNewBook = require('./helpers/createNewBook');
+const createNewBook = require('./helpers/createNewBook'); 
+const auth = require('./middlwares/auth');
 
 const app = express();
 
@@ -13,6 +14,7 @@ const routes = require("./Route/routes")
 
 
 
+app.use(express.json());
 
 app.use(bodyParser.urlencoded({ extended: false }))
  
@@ -20,15 +22,9 @@ app.use(bodyParser.json())
 
 app.use('/api', routes)
 
-// app.get('/', (req, res) =>{
-//     Book.find({}).then((data) => {
-//         res.send(data)
-//         console.log(data)
-//     })   
-//     .catch((err) => {
-//         console.log(err)
-//     })
-//  })
+// app.use(authorization)
+// app.use(auth);
+// app.use(deleteUser);
 
 
 const port = process.env.Port || 5000

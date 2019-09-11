@@ -4,9 +4,10 @@ const morgan = require('morgan');
 const router = express.Router()
 const Book = require('../models/books');
 const User = require('../models/users');
-const addUser = require('../services/userServices')
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const config = require("config")
+const {auth, authorization} = require("../middlwares/auth")
 
 router.get('/books', (req,res) =>{
    Book.find({}).then((data) => {
@@ -59,11 +60,11 @@ router.post('/books', (req, res ) => {
         yearPublished: req.body.yearPublished,
         price: req.body.price
     })
-    book.save(function(err, post){
+    book.save(function(err, data){
         if(err){
             console.log(err.message)
         }else{
-            console.log(post);
+            console.log(data);
         }
     })
     // res.send(book);
@@ -73,7 +74,6 @@ router.post('/books', (req, res ) => {
 router.post('/users', (req, res ) => {
   User.findOne({ email: req.body.email}).then(user => {
       if(user){
-        //   console.log(user)
         return res.status(400).send('user existing already...')
       }
       else{
@@ -81,47 +81,35 @@ router.post('/users', (req, res ) => {
                     {
                         name: req.body.name,
                         email: req.body.email,
-                        dateOfBirth: req.body.dateOfBirth,
+                        role: req.body.role,
                         password: req.body.password
             
                 });
-                    // const salt = await bcrypt.genSalt(10); 
                     newUser.password =  bcrypt.hash(newUser.password, 10).then((hashedPassword) => {
                         newUser.password = hashedPassword;
-                        // console.log(hashedPassword)
                         newUser.save();
 
                     })
-
-                    res.send("Added");
+                    const token = jwt.sign({id:newUser._id}, config.get('jwtPrivateKey'));
+                    res.header('x-auth-token',token).status(200).send("Sign-up successful");
 
                 } 
             })
-            // _.pick(user, ['_id','name','email'])
-            
-                //instead of using this we use the lodash method
-            // name: req.body.name,
-            // email: req.body.email
-    
-   
-
 });
 
 
-router.post('/users/login', async (req, res) => {
+router.post('/users/login', auth, (req, res) => {
     User.findOne({ email: req.body.email }).then(user =>{
-        // console.log(user)
         if(!user){
             res.status(404).send('user not found...check your email or password')
         }
         else{
-            console.log(req.body.password)
           bcrypt.compare(req.body.password, user.password).then(isMatch =>{
                 if(isMatch){
                     data = {id: user._id, name: user.name}
                     console.log(data)
-                  const token = jwt.sign(data, "Godness", {expiresIn: '100d'})
-                  res.send(token)
+                    const token = jwt.sign({id:user._id}, config.get('jwtPrivateKey'));
+                    res.header('x-auth-token',token).status(200).send("login successful");
                 }
                 else{
                     console.log("not match");
@@ -130,16 +118,26 @@ router.post('/users/login', async (req, res) => {
             .catch(err => {
                 console.log(err)
             })
-           // console.log(validPassword)
-            // if(!validPassword){
-
+        
         }
         
     })
       
-    //     res.status(404).send('invalid password')
-    //     res.send(true);
-    // }
 })
+
+
+router.delete('/admin/delete', [auth, authorization], (req ,res) =>{
+ findOneAndDelete({email: req.body.email}).then(deleted => {
+     if(deleted){
+         res.send("Deleted")
+     }
+     else{
+         res.send("Not deleted")
+     }
+ }).catch(err => {
+     console.log(err)
+ })
+})
+
 
 module.exports = router
